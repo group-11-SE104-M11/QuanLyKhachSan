@@ -192,6 +192,148 @@ namespace QUANLYKHACHSAN
         }
         #endregion
 
+        #region KhachHang
+        private void listView_KhachHang_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView_KhachHang.SelectedItems.Count == 0) return;
+
+            // Lay phan tu duoc chon tren listview
+            ListViewItem lvi = listView_KhachHang.SelectedItems[0];
+
+
+            // Hien thi thong tin tu listview sang cac textbox
+            tb_KH_HoTen.Text = lvi.SubItems[1].Text;
+            tb_KH_CMND.Text = lvi.SubItems[2].Text;
+            tb_KH_SDT.Text = lvi.SubItems[3].Text;
+            date_KH_NgaySinh.Text = lvi.SubItems[4].Text;
+            string gender = lvi.SubItems[5].Text;
+            if (gender == "Nữ")
+            {
+                rbtn_KH_GTNu.Checked = true;
+            }
+            else
+            {
+                rbtn_KH_GTNam.Checked = true;
+            }
+        }
+
+        private void btn_KH_TimKiem_Click(object sender, EventArgs e)
+        {
+            string cmd_tk = "select * from KHACHHANG where ID > 0";
+            if (tb_KH_TimHoTen.Text.Trim() != "")
+                cmd_tk += " and HOTEN=N'" + tb_KH_TimHoTen.Text.Trim() + "'";
+            if (tb_KH_TimCMND.Text.Trim() != "")
+                cmd_tk += " and CMND='" + tb_KH_TimCMND.Text.Trim() + "'";
+            if (tb_KH_TimSDT.Text.Trim() != "")
+                cmd_tk += " and SDT='" + tb_KH_TimSDT.Text.Trim() + "'";
+            QLKH_Load_ThongTinKH(cmd_tk);
+        }
+
+        //Tu Them
+        private void btn_KH_Them_Click(object sender, EventArgs e)
+        {
+            KHACHHANG kh = new KHACHHANG();
+
+            if (QLKH_CheckThongTin() == false)
+                return;
+
+            kh.TenKH = tb_KH_HoTen.Text.Trim();
+            kh.CMND = tb_KH_CMND.Text.Trim();
+            kh.SDT = tb_KH_SDT.Text.Trim();
+            kh.NgaySinh = date_KH_NgaySinh.Value;
+            if (rbtn_KH_GTNam.Checked == true)
+            {
+                kh.GioiTinh = "Nam";
+            }
+            else
+            {
+                kh.GioiTinh = "Nữ";
+            }
+
+            int kq = 0;
+            if (DV_Xacnhan("Bạn có đồng ý thêm khách hàng?") == true)
+            {
+                kq = kh.ThemKH();
+            }
+            else
+            {
+                return;
+            }
+
+            cmd = "select * from KHACHHANG";
+            if (kq > 0)
+            {
+                MessageBox.Show("Thêm khách hàng thành công");
+                QLKH_Load_ThongTinKH(cmd);
+            }
+            else
+            {
+                MessageBox.Show("Thêm khách hàng thất bại");
+                QLKH_Load_ThongTinKH(cmd);
+            }
+        }
+
+        //Tu sua kh
+        private void btn_KH_Sua_Click(object sender, EventArgs e)
+        {
+            KHACHHANG kh = new KHACHHANG();
+
+            if (QLKH_CheckThongTin() == false)
+                return;
+
+            if (rbtn_KH_GTNam.Checked == true)
+            {
+                kh.GioiTinh = "Nam";
+            }
+            else
+            {
+                kh.GioiTinh = "Nữ";
+            }
+
+            kh.ID = Convert.ToInt32(listView_KhachHang.SelectedItems[0].SubItems[0].Text.Trim());
+            kh.TenKH = tb_KH_HoTen.Text.Trim();
+            kh.CMND = tb_KH_CMND.Text.Trim();
+            kh.SDT = tb_KH_SDT.Text.Trim();
+            kh.NgaySinh = date_KH_NgaySinh.Value;
+
+            int kq = 0;
+            if (DV_Xacnhan("Bạn có đồng ý sửa thông tin khách hàng?") == true)
+            {
+                kq = kh.SuaKH();
+            }
+            else
+            {
+                return;
+            }
+
+            cmd = "select * from KHACHHANG";
+            if (kq > 0)
+            {
+                MessageBox.Show("Chỉnh sửa thông tin thành công!");
+
+                QLKH_Load_ThongTinKH(cmd);
+                clear_data();
+            }
+            else
+            {
+                MessageBox.Show("Chỉnh sửa thông tin thất bại!");
+                QLKH_Load_ThongTinKH(cmd);
+                clear_data();
+            }
+        }
+
+        //Kiem tra nhap thong tin du chua
+        bool QLKH_CheckThongTin()
+        {
+            if (rbtn_KH_GTNam.Checked != true && rbtn_KH_GTNu.Checked != true || tb_KH_HoTen.Text.Trim() == "" || tb_KH_CMND.Text.Trim() == "" || tb_KH_SDT.Text.Trim() == "")
+            {
+                MessageBox.Show("Thiếu thông tin");
+                return false;
+            }
+            return true;
+        }
+
+        #endregion
 
         #region Phong
 
@@ -312,7 +454,7 @@ namespace QUANLYKHACHSAN
 
         private void QLKH_Load_ThongTinKH(string cmd)
         {
-            
+
             DataTable dt = DataProvider.Instance.ExecuteQuery(cmd);
 
             listView_KhachHang.Items.Clear();
@@ -325,7 +467,7 @@ namespace QUANLYKHACHSAN
                 listView_KhachHang.Items[i].SubItems.Add(dt.Rows[i].ItemArray[4].ToString());
                 listView_KhachHang.Items[i].SubItems.Add(dt.Rows[i].ItemArray[5].ToString());
             }
-            
+
         }
 
         //clear
@@ -356,7 +498,7 @@ namespace QUANLYKHACHSAN
 
             ID_ten_phong = int.Parse(DataProvider.Instance.ExecuteScalar(cmnd_ten_phong).ToString());
         }
-        
+
         int ID_KH = -10000;
         private void list_KH_thue_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -428,37 +570,18 @@ namespace QUANLYKHACHSAN
             string tt_phong_thue = tt_phong.SelectedItem.ToString().Trim();
             string cmd_tt_thue_phong = "select ID " +
                 "from TRANGTHAITHUEPHONG where TENTRANGTHAI = N'" + tt_phong_thue + "'";
-            int ID_TT_Phong = -100;
-            ID_TT_Phong = int.Parse(DataProvider.Instance.ExecuteScalar(cmd_tt_thue_phong).ToString());
+            int ID_TT_Phong = int.Parse(DataProvider.Instance.ExecuteScalar(cmd_tt_thue_phong).ToString());
+
+            THUEPHONG thuephong = new THUEPHONG();
 
             //xu li luu data 
-            int IDPhong = ID_ten_phong;
-            int IDKhachHang = ID_KH;
-            decimal SoNguoi = so_nguoi_thue.Value;
-            DateTime NgayDatPhong = dat_phong.Value;
-            DateTime NgayCheckIn = check_in.Value;
-            DateTime NgayCheckOut = check_out.Value;
-            int IDTrangThai = ID_TT_Phong;
-
-
-            string cmd = "insert into BANGTHUEPHONG values('" + IDPhong + "','" + IDKhachHang + "','" + SoNguoi + "','" + NgayDatPhong +
-                 "','" + NgayCheckIn + "','" + NgayCheckOut + "','" + IDTrangThai + "')";
-
-            int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
-            if (kq > 0)
-            {
-                MessageBox.Show("Đăng ký thành công");
-            }
-            else
-            {
-                MessageBox.Show("Đăng ký thất bại");
-            }
-
-            //  list_TraCuu_Thue.Clear();
-            cmd = "select BTP.ID, P.TENPHONG,KH.HOTEN,KH.CMND,BTP.SoNguoi,BTP.NgayDatPhong,BTP.NgayCheckin,BTP.NgayCheckout,TT.TENTRANGTHAI " +
-                "from BANGTHUEPHONG as BTP,PHONG as P,TRANGTHAITHUEPHONG as TT,KHACHHANG as KH " +
-                "where BTP.IDPhong = P.ID and BTP.IDKhachHang = KH.ID and BTP.IDTrangThai = TT.ID";
-            HienThiThongTin_TraCuu_Thue(cmd);
+            thuephong.IDPhong = ID_ten_phong;
+            thuephong.IDKhachHang = ID_KH;
+            thuephong.SoNguoi = so_nguoi_thue.Value;
+            thuephong.NgayDatPhong = dat_phong.Value;
+            thuephong.NgayCheckIn = check_in.Value;
+            thuephong.NgayCheckOut = check_out.Value;
+            thuephong.IDTrangThai = ID_TT_Phong;
 
             string temp_TT = "";
             if (tt_phong.Text.Trim() == "Đã check in")
@@ -474,27 +597,33 @@ namespace QUANLYKHACHSAN
                 temp_TT = "Còn trống";
             }
 
-            int ID_Phong = -1;
-            int ID_TT = -1;
-            cmd = "select P.ID,T.ID from PHONG as P,TINHTRANGPHONG as T where P.TENPHONG =N'" + ten_phong_thue.Text.Trim() + "' and T.TEN =N'" + temp_TT + "'";
-            
-            DataTable dt =  DataProvider.Instance.ExecuteQuery(cmd);
-            ID_Phong = int.Parse(dt.Rows[0].ItemArray[0].ToString());
-            ID_TT = int.Parse(dt.Rows[0].ItemArray[1].ToString());
+            cmd = "select T.ID from TINHTRANGPHONG as T where T.TEN =N'" + temp_TT + "'";
+
+            DataTable dt = DataProvider.Instance.ExecuteQuery(cmd);
+            thuephong.IDTinhTrangPhong = int.Parse(dt.Rows[0].ItemArray[0].ToString());
 
 
-            Console.WriteLine(ID_TT);
-            Console.WriteLine(ID_Phong);
+            int kq = thuephong.LapPhieuThuePhong();
+            if (kq > 0)
+            {
+                MessageBox.Show("Đăng ký thành công");
+            }
+            else
+            {
+                MessageBox.Show("Đăng ký thất bại");
+            }
 
-            cmd = "update PHONG set IDTINHTRANG='" + ID_TT + "' WHERE ID ='" + ID_Phong + "'";
-            kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+            //  list_TraCuu_Thue.Clear();
+            cmd = "select BTP.ID, P.TENPHONG,KH.HOTEN,KH.CMND,BTP.SoNguoi,BTP.NgayDatPhong,BTP.NgayCheckin,BTP.NgayCheckout,TT.TENTRANGTHAI " +
+                "from BANGTHUEPHONG as BTP,PHONG as P,TRANGTHAITHUEPHONG as TT,KHACHHANG as KH " +
+                "where BTP.IDPhong = P.ID and BTP.IDKhachHang = KH.ID and BTP.IDTrangThai = TT.ID";
+            HienThiThongTin_TraCuu_Thue(cmd);
 
             cmd = "select TENPHONG,TENLOAIPHONG,GIA,SOGIUONG,SONGUOITOIDA,PHUTHU,TEN from dbo.LOAIPHONG as L," +
                   "PHONG as P,TINHTRANGPHONG as T where L.ID = P.IDLOAIPHONG and T.ID = P.IDTINHTRANG and TEN = N'Còn trống'";
             HienThiPhong(cmd);
 
 
-          
         }
 
         string temp_ID = "";
@@ -579,25 +708,14 @@ namespace QUANLYKHACHSAN
             cmd = " select ID from dbo.TRANGTHAITHUEPHONG where TENTRANGTHAI = N'" + tt_phong.Text.Trim() + "'";
             trang_thai_phong = int.Parse(DataProvider.Instance.ExecuteScalar(cmd).ToString());
 
-            cmd = "update BANGTHUEPHONG set SoNguoi='" + so_nguoi_thue.Value + "',NgayDatPhong='" + dat_phong.Text + "',NgayCheckin='" + check_in.Text + "'" +
-               ",NgayCheckout = '" + check_out.Text + "',IDTrangThai = '" + trang_thai_phong + "' WHERE ID ='" + Convert.ToInt32(temp_ID) + "'";
+            THUEPHONG thuephong = new THUEPHONG();
+            thuephong.SoNguoi = so_nguoi_thue.Value;
+            thuephong.NgayDatPhong = dat_phong.Value;
+            thuephong.NgayCheckIn = check_in.Value;
+            thuephong.NgayCheckOut = check_out.Value;
+            thuephong.IDTrangThai = trang_thai_phong;
+            thuephong.ID = Convert.ToInt32(temp_ID);
 
-            int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
-            cmd = "select BTP.ID,P.TENPHONG,KH.HOTEN,KH.CMND,BTP.SoNguoi,BTP.NgayDatPhong,BTP.NgayCheckin,BTP.NgayCheckout,TT.TENTRANGTHAI " +
-             "from BANGTHUEPHONG as BTP,PHONG as P,TRANGTHAITHUEPHONG as TT,KHACHHANG as KH " +
-             "where BTP.IDPhong = P.ID and BTP.IDKhachHang = KH.ID and BTP.IDTrangThai = TT.ID";
-            if (kq > 0)
-            {
-                MessageBox.Show("Chỉnh sửa thông tin thành công!");
-                HienThiThongTin_TraCuu_Thue(cmd);
-                clear_data();
-            }
-            else
-            {
-                MessageBox.Show("Chỉnh sửa thông tin thất bại!");
-                HienThiThongTin_TraCuu_Thue(cmd);
-                clear_data();
-            }
             string temp_TT = "";
             if (tt_phong.Text.Trim() == "Đã check in")
             {
@@ -612,21 +730,30 @@ namespace QUANLYKHACHSAN
                 temp_TT = "Còn trống";
             }
 
-            int ID_Phong = -1;
-            int ID_TT = -1;
             cmd = "select P.ID,T.ID from PHONG as P,TINHTRANGPHONG as T where P.TENPHONG =N'" + ten_phong_thue.Text.Trim() + "' and T.TEN =N'" + temp_TT + "'";
 
-            DataTable dt =  DataProvider.Instance.ExecuteQuery(cmd);
-            ID_Phong = int.Parse(dt.Rows[0].ItemArray[0].ToString());
-            ID_TT = int.Parse(dt.Rows[0].ItemArray[1].ToString());
+            DataTable dt = DataProvider.Instance.ExecuteQuery(cmd);
+            thuephong.IDPhong = int.Parse(dt.Rows[0].ItemArray[0].ToString());
+            thuephong.IDTinhTrangPhong = int.Parse(dt.Rows[0].ItemArray[1].ToString());
 
 
-            Console.WriteLine(ID_TT);
-            Console.WriteLine(ID_Phong);
+            cmd = "select BTP.ID,P.TENPHONG,KH.HOTEN,KH.CMND,BTP.SoNguoi,BTP.NgayDatPhong,BTP.NgayCheckin,BTP.NgayCheckout,TT.TENTRANGTHAI " +
+             "from BANGTHUEPHONG as BTP,PHONG as P,TRANGTHAITHUEPHONG as TT,KHACHHANG as KH " +
+             "where BTP.IDPhong = P.ID and BTP.IDKhachHang = KH.ID and BTP.IDTrangThai = TT.ID";
 
-            cmd = "update PHONG set IDTINHTRANG='" + ID_TT + "' WHERE ID ='" + ID_Phong + "'";
-
-            kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+            int kq = thuephong.SuaPhieuThuePhong();
+            if (kq > 0)
+            {
+                MessageBox.Show("Chỉnh sửa thông tin thành công!");
+                HienThiThongTin_TraCuu_Thue(cmd);
+                clear_data();
+            }
+            else
+            {
+                MessageBox.Show("Chỉnh sửa thông tin thất bại!");
+                HienThiThongTin_TraCuu_Thue(cmd);
+                clear_data();
+            }
 
             cmd = "select TENPHONG,TENLOAIPHONG,GIA,SOGIUONG,SONGUOITOIDA,PHUTHU,TEN from dbo.LOAIPHONG as L," +
                   "PHONG as P,TINHTRANGPHONG as T where L.ID = P.IDLOAIPHONG and T.ID = P.IDTINHTRANG and TEN = N'Còn trống'";
@@ -675,13 +802,16 @@ namespace QUANLYKHACHSAN
                 MessageBox.Show("Nhập thiếu thông tin");
                 return;
             }
-            string tenloaiphong = txtTenLoaiPhong.Text.Trim();
-            decimal gia = decimal.Parse(txtGia.Text.Trim());
-            int songuoitoida = int.Parse(txtSoNguoiToiDa.Text.Trim());
-            int sogiuong = int.Parse(txtSoGiuong.Text.Trim());
-            decimal phuthu = decimal.Parse(txtPhuThu.Text.Trim());
 
-            string cmd = "select count(ID) from LOAIPHONG where TENLOAIPHONG = N'" + tenloaiphong + "'";
+            LOAIPHONG loaiphong = new LOAIPHONG();
+
+            loaiphong.TenLoaiPhong = txtTenLoaiPhong.Text.Trim();
+            loaiphong.Gia = decimal.Parse(txtGia.Text.Trim());
+            loaiphong.SoNguoiToiDa = int.Parse(txtSoNguoiToiDa.Text.Trim());
+            loaiphong.SoGiuong = int.Parse(txtSoGiuong.Text.Trim());
+            loaiphong.PhuThu = decimal.Parse(txtPhuThu.Text.Trim());
+
+            string cmd = "select count(ID) from LOAIPHONG where TENLOAIPHONG = N'" + loaiphong.TenLoaiPhong + "'";
             int check = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd).ToString());
 
             if (check == 1)
@@ -690,9 +820,7 @@ namespace QUANLYKHACHSAN
                 return;
             }
 
-            cmd = "insert into LOAIPHONG values ('" + tenloaiphong + "','" + gia + "','" + songuoitoida + "','" + sogiuong + "','" + phuthu + "')";
-
-            int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+            int kq = loaiphong.ThemLoaiPhong();
             if (kq > 0)
             {
                 MessageBox.Show("Thêm loại phòng thành công");
@@ -710,21 +838,23 @@ namespace QUANLYKHACHSAN
         {
             if (MessageBox.Show("Bạn có muốn sửa loại phòng?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
-            if (txtTenLoaiPhong.Text.Trim() == "" || txtGia.Text.Trim() == "" || txtSoNguoiToiDa.Text.Trim()==""|| txtSoGiuong.Text.Trim() == "" || txtPhuThu.Text.Trim() == "")
+            if (txtTenLoaiPhong.Text.Trim() == "" || txtGia.Text.Trim() == "" || txtSoNguoiToiDa.Text.Trim() == "" || txtSoGiuong.Text.Trim() == "" || txtPhuThu.Text.Trim() == "")
             {
                 MessageBox.Show("Nhập thiếu thông tin");
                 return;
             }
 
-            string tenloaiphong = txtTenLoaiPhong.Text.Trim();
-            decimal gia = decimal.Parse(txtGia.Text.Trim());
-            int songuoitoida = int.Parse(txtSoNguoiToiDa.Text.Trim());
-            int sogiuong = int.Parse(txtSoGiuong.Text.Trim());
-            decimal phuthu = decimal.Parse(txtPhuThu.Text.Trim());
+            LOAIPHONG loaiphong = new LOAIPHONG();
 
-            if (tenloaiphong != tb_QLLP_TenLPCheck.Text.Trim())
+            loaiphong.TenLoaiPhong = txtTenLoaiPhong.Text.Trim();
+            loaiphong.Gia = decimal.Parse(txtGia.Text.Trim());
+            loaiphong.SoNguoiToiDa = int.Parse(txtSoNguoiToiDa.Text.Trim());
+            loaiphong.SoGiuong = int.Parse(txtSoGiuong.Text.Trim());
+            loaiphong.PhuThu = decimal.Parse(txtPhuThu.Text.Trim());
+
+            if (loaiphong.TenLoaiPhong != tb_QLLP_TenLPCheck.Text.Trim())
             {
-                string cmd = "select count(ID) from LOAIPHONG where TENLOAIPHONG = N'" + tenloaiphong + "'";
+                string cmd = "select count(ID) from LOAIPHONG where TENLOAIPHONG = N'" + loaiphong.TenLoaiPhong + "'";
                 int check = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd).ToString());
 
                 if (check == 1)
@@ -733,10 +863,11 @@ namespace QUANLYKHACHSAN
                     return;
                 }
             }
-            string cmd1 = "select ID from LOAIPHONG where TENLOAIPHONG = N'" + tb_QLLP_TenLPCheck.Text.Trim() + "'";
-            int IDLoaiPhong = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd1).ToString());
 
-            cmd = "update LOAIPHONG set TENLOAIPHONG = N'" + tenloaiphong + "', GIA = '" + txtGia.Text.Trim() + "', SONGUOITOIDA = '" + txtSoNguoiToiDa.Text.Trim() + "', SOGIUONG = '" + txtSoGiuong.Text.Trim() + "', PHUTHU = '" + txtPhuThu.Text.Trim() + "' where ID = '" + IDLoaiPhong + "'";
+            string cmd1 = "select ID from LOAIPHONG where TENLOAIPHONG = N'" + tb_QLLP_TenLPCheck.Text.Trim() + "'";
+            loaiphong.ID = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd1).ToString());
+
+
             int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
             if (kq > 0)
             {
@@ -767,7 +898,7 @@ namespace QUANLYKHACHSAN
                 MessageBox.Show(dt.ToString());
                 MessageBox.Show("Không được phép xóa loại phòng này");
                 return;
-            }    
+            }
             DialogResult kq = MessageBox.Show("Do you really want to delete?", "Warning!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (kq == DialogResult.Yes)
             {
@@ -777,16 +908,10 @@ namespace QUANLYKHACHSAN
 
         private void XoaLoaiPhong(string ten_loai_phong)  // xoa quan ly loai phong (2)
         {
-            string tenloaiphong = txtTenLoaiPhong.Text.Trim();
-            decimal gia = decimal.Parse(txtGia.Text.Trim());
-            int songuoitoida = int.Parse(txtSoNguoiToiDa.Text.Trim());
-            int sogiuong = int.Parse(txtSoGiuong.Text.Trim());
-            decimal phuthu = decimal.Parse(txtPhuThu.Text.Trim());
+            LOAIPHONG loaiphong = new LOAIPHONG();
+            loaiphong.TenLoaiPhong = txtTenLoaiPhong.Text.Trim();
 
-
-            string cmd = "delete from LOAIPHONG where TENLOAIPHONG='" + ten_loai_phong + "'";
-
-            int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+            int kq = loaiphong.XoaLoaiPhong();
             if (kq > 0)
             {
                 MessageBox.Show("Xóa loại phòng thành công");
@@ -850,6 +975,8 @@ namespace QUANLYKHACHSAN
         // Them Phong`
         private void btn_QLP_Them_Click(object sender, EventArgs e)
         {
+            PHONG phong = new PHONG();
+
             if (MessageBox.Show("Bạn có muốn thêm phòng?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
             if (tb_QLP_TenPhong.Text == "")
@@ -870,12 +997,12 @@ namespace QUANLYKHACHSAN
             else
             {
 
-                string tenphong = tb_QLP_TenPhong.Text.Trim();
-                int loaiphong = int.Parse(tb_QLP_IDLoaiPhong.Text.Trim());
-                int tinhtrangphong = int.Parse(tb_QLP_IDTinhTrangPhong.Text.Trim());
+                phong.TenPhong = tb_QLP_TenPhong.Text.Trim();
+                phong.IDLoaiPhong = int.Parse(tb_QLP_IDLoaiPhong.Text.Trim());
+                phong.IDTinhTrangPhong = int.Parse(tb_QLP_IDTinhTrangPhong.Text.Trim());
 
 
-                string cmd = "select count(ID) from PHONG where TENPHONG = N'" + tenphong + "'";
+                string cmd = "select count(ID) from PHONG where TENPHONG = N'" + phong.TenPhong + "'";
                 int check = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd).ToString());
                 if (check > 0)
                 {
@@ -883,8 +1010,7 @@ namespace QUANLYKHACHSAN
                     return;
                 }
 
-                cmd = "insert into PHONG values ('" + tenphong + "','" + loaiphong + "','" + tinhtrangphong + "')";
-                int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+                int kq = phong.ThemPhong();
                 if (kq > 0)
                 {
                     MessageBox.Show("Thêm phòng thành công");
@@ -901,6 +1027,8 @@ namespace QUANLYKHACHSAN
         //Sua Phong`
         private void btn_QLP_Sua_Click(object sender, EventArgs e)
         {
+            PHONG phong = new PHONG();
+
             if (MessageBox.Show("Bạn có muốn sửa phòng?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 return;
 
@@ -916,14 +1044,15 @@ namespace QUANLYKHACHSAN
             }
             else
             {
-                string tenphong = tb_QLP_TenPhong.Text.Trim();
-                int loaiphong = int.Parse(tb_QLP_IDLoaiPhong.Text.Trim());
-                int tinhtrangphong = int.Parse(tb_QLP_IDTinhTrangPhong.Text.Trim());
+                phong.TenPhong = tb_QLP_TenPhong.Text.Trim();
+                phong.IDLoaiPhong = int.Parse(tb_QLP_IDLoaiPhong.Text.Trim());
+                phong.IDTinhTrangPhong = int.Parse(tb_QLP_IDTinhTrangPhong.Text.Trim());
+
                 string tenphongcheck = tb_QLP_TenPhongCheck.Text.Trim();
 
-                if (tenphong != tenphongcheck)
+                if (phong.TenPhong != tenphongcheck)
                 {
-                    string cmd = "select count(ID) from PHONG where TENPHONG = N'" + tenphong + "'";
+                    string cmd = "select count(ID) from PHONG where TENPHONG = N'" + phong.TenPhong + "'";
                     int check = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd).ToString().Trim());
 
                     if (check == 1)
@@ -937,10 +1066,7 @@ namespace QUANLYKHACHSAN
                 string cmd1 = "select ID from PHONG where TENPHONG = N'" + tenphongcheck + "'";
                 int IDPhong = Int32.Parse(DataProvider.Instance.ExecuteScalar(cmd1).ToString().Trim());
 
-
-                cmd = "update PHONG set TENPHONG = N'" + tenphong + "', IDLOAIPHONG = '" + loaiphong + "', IDTINHTRANG = '" + tinhtrangphong + "' where ID = '" + IDPhong + "'";
-
-                int kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+                int kq = phong.SuaPhong();
                 if (kq > 0)
                 {
                     MessageBox.Show("Sửa phòng thành công");
@@ -956,7 +1082,7 @@ namespace QUANLYKHACHSAN
         }
         // Xoa Phong`
         private void btn_QLP_Xoa_Click(object sender, EventArgs e)
-        {    
+        {
             DialogResult kq1 = MessageBox.Show("Bạn chắc chắn muốn xóa?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (kq1 == DialogResult.Yes)
             {
@@ -972,10 +1098,10 @@ namespace QUANLYKHACHSAN
 
                 else
                 {
+                    PHONG phong = new PHONG();
+                    phong.TenPhong = tb_QLP_TenPhong.Text.Trim();
 
-                    string tenphong1 = tb_QLP_TenPhong.Text.Trim();
-                    cmd = "delete from PHONG where TENPHONG = N'" + tenphong1 + "'";
-                    int kq3 = DataProvider.Instance.ExecuteNonQuery(cmd);
+                    int kq3 = phong.XoaPhong();
                     if (kq3 > 0)
                     {
                         MessageBox.Show("Xóa thành công");
@@ -1048,489 +1174,6 @@ namespace QUANLYKHACHSAN
             tb_QLP_IDTinhTrangPhong.Text = DataProvider.Instance.ExecuteScalar(cmd_QLP_TimIDPTTPhong).ToString().Trim();
         }
 
-
-        #endregion
-
-        #region Khachhang
-        private void listView_KhachHang_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (listView_KhachHang.SelectedItems.Count == 0) return;
-
-            // Lay phan tu duoc chon tren listview
-            ListViewItem lvi = listView_KhachHang.SelectedItems[0];
-
-
-            // Hien thi thong tin tu listview sang cac textbox
-            tb_KH_HoTen.Text = lvi.SubItems[1].Text;
-            tb_KH_CMND.Text = lvi.SubItems[2].Text;
-            tb_KH_SDT.Text = lvi.SubItems[3].Text;
-            date_KH_NgaySinh.Text = lvi.SubItems[4].Text;
-            string gender = lvi.SubItems[5].Text;
-            if (gender == "Nữ")
-            {
-                rbtn_KH_GTNu.Checked = true;
-            }
-            else
-            {
-                rbtn_KH_GTNam.Checked = true;
-            }
-        }
-
-        private void btn_KH_TimKiem_Click(object sender, EventArgs e)
-        {
-            string cmd_tk = "select * from KHACHHANG where ID > 0";
-            if (tb_KH_TimHoTen.Text.Trim() != "")
-                cmd_tk += " and HOTEN=N'" + tb_KH_TimHoTen.Text.Trim() + "'";
-            if (tb_KH_TimCMND.Text.Trim() != "")
-                cmd_tk += " and CMND='" + tb_KH_TimCMND.Text.Trim() + "'";
-            if (tb_KH_TimSDT.Text.Trim() != "")
-                cmd_tk += " and SDT='" + tb_KH_TimSDT.Text.Trim() + "'";
-            QLKH_Load_ThongTinKH(cmd_tk);
-        }
-
-        //Tu Them
-        private void btn_KH_Them_Click(object sender, EventArgs e)
-        {
-            if (QLKH_CheckThongTin() == false)
-                return;
-            //lay du lieu 
-            String Gtinh = null;
-            string tenKH = tb_KH_HoTen.Text.Trim();
-            string cmnd = tb_KH_CMND.Text.Trim();
-            string sdt = tb_KH_SDT.Text.Trim();
-            DateTime Nsinh = date_KH_NgaySinh.Value;
-            if (rbtn_KH_GTNam.Checked == true)
-            {
-                Gtinh = "Nam";
-            }
-            else
-            {
-                Gtinh = "Nữ";
-            }
-
-            string query = "insert into KHACHHANG values(N'" + tenKH + "','" + cmnd + "','" + sdt + "','" + Nsinh + "',N'" + Gtinh + "')";
-
-            cmd = "select * from KHACHHANG";
-            int kq = 0;
-            if (DV_Xacnhan("Bạn có đồng ý thêm khách hàng?") == true)
-            {
-                kq = DataProvider.Instance.ExecuteNonQuery(query);
-            }
-            else
-            {
-                return;
-            }
-
-            if (kq > 0)
-            {
-                MessageBox.Show("Thêm khách hàng thành công");
-                QLKH_Load_ThongTinKH(cmd);
-            }
-            else
-            {
-                MessageBox.Show("Thêm khách hàng thất bại");
-                QLKH_Load_ThongTinKH(cmd);
-            }
-        }
-
-        //Tu sua kh
-        private void btn_KH_Sua_Click(object sender, EventArgs e)
-        {
-
-            if (QLKH_CheckThongTin() == false)
-                return;
-
-            string Gtinh = null;
-            if (rbtn_KH_GTNam.Checked == true)
-            {
-                Gtinh = "Nam";
-            }
-            else
-            {
-                Gtinh = "Nữ";
-            }
-
-            STT = Convert.ToInt32(listView_KhachHang.SelectedItems[0].SubItems[0].Text.Trim());
-
-            string cmd_KH_Query = "update KHACHHANG set HOTEN = N'" + tb_KH_HoTen.Text.Trim() + "'" +
-            ",CMND='" + tb_KH_CMND.Text.Trim() + "',SDT='" + tb_KH_SDT.Text.Trim() + "',NGAYSINH='" + date_KH_NgaySinh.Value.ToString() +
-            "',GIOITINH=N'" + Gtinh + "'WHERE ID = '" + STT + "'";
-
-            cmd = "select * from KHACHHANG";
-            int kq = 0;
-            if (DV_Xacnhan("Bạn có đồng ý sửa thông tin khách hàng?") == true)
-            {
-                kq = DataProvider.Instance.ExecuteNonQuery(cmd_KH_Query);
-            }
-            else
-            {
-                return;
-            }
-
-            if (kq > 0)
-            {
-                MessageBox.Show("Chỉnh sửa thông tin thành công!");
-
-                QLKH_Load_ThongTinKH(cmd);
-                clear_data();
-            }
-            else
-            {
-                MessageBox.Show("Chỉnh sửa thông tin thất bại!");
-                QLKH_Load_ThongTinKH(cmd);
-                clear_data();
-            }
-        }
-
-        //Kiem tra nhap thong tin du chua
-        bool QLKH_CheckThongTin()
-        {
-            if (rbtn_KH_GTNam.Checked != true && rbtn_KH_GTNu.Checked != true || tb_KH_HoTen.Text.Trim() == "" || tb_KH_CMND.Text.Trim() == "" || tb_KH_SDT.Text.Trim() == "")
-            {
-                MessageBox.Show("Thiếu thông tin");
-                return false;
-            }
-            return true;
-        }
-
-        #endregion
-
-        #region QuanLyNhanVien
-        //Tab control
-        bool DV_ktDulieu(string str)
-        {
-            for (int i = 0; i < str.Length; i++)
-            {
-                if ((str[i] >= 48 && str[i] <= 57) == false)
-                {
-                    if (str[i] != '.')
-                    {
-                        return false;
-                    }
-                }
-
-            }
-            return true;
-        }
-        
-        // kiểm tra dữ liệu nhập vào
-        bool ktDuLieuNV()
-        {
-            string ten = tb_NV_tenNV.Text.Trim();
-            string sdt = tb_NV_sdtNV.Text.Trim();
-            string cmnd = tb_NV_cmndNV.Text.Trim();
-            string diachi = tb_NV_dcNV.Text.Trim();
-            string luongcb = tb_NV_lcbNV.Text.Trim();
-            string chucvu = cb_NV_chucvu.Text.Trim();
-
-            string errorTen = "";
-            string errorSDT = "";
-            string errorCMND = "";
-            string errorDiaChi = "";
-            string errorLuongcb = "";
-            string errorChucVu = "";
-
-            bool check = false;
-            if (ten.Trim() == "")
-            {
-                errorTen = "Nhập thiếu tên!\n";
-                check = true;
-            }
-
-            if (chucvu.Trim() == "")
-            {
-                errorChucVu = "Nhập thiếu chức vụ!\n";
-                check = true;
-            }
-
-            if (diachi.Trim() == "")
-            {
-                errorDiaChi = "Nhập thiếu địa chỉ!\n";
-                check = true;
-            }
-
-            if (tb_NV_lcbNV.Text.Trim() != "")
-            {
-                //luongcb = tb_NV_lcbNV.Text.Trim().Split('.');
-                if (DV_ktDulieu(luongcb) == false)
-                {
-                    errorLuongcb = "Nhập sai lương!\n";
-                    check = true;
-                }
-            }
-            else
-            {
-                errorLuongcb = "Nhập thiếu lương!\n";
-                check = true;
-            }
-
-            if (sdt.Length == 0)
-            {
-                errorSDT = "Nhập thiếu số điện thoại!\n";
-                check = true;
-            }
-            else
-            {
-                if (sdt.Length != 10)
-                {
-                    errorSDT = "Nhập sai số điện thoại!\n";
-                    check = true;
-                }
-                else
-                {
-                    if (DV_ktDulieu(sdt) == false)
-                    {
-                        errorSDT = "Nhập sai số điện thoại!\n";
-                        check = true;
-                    }
-
-                }
-            }
-
-            if (cmnd.Length == 0)
-            {
-                errorCMND = "Nhập thiếu CMND/CCCD!\n";
-                check = true;
-            }
-            else
-            {
-                if (cmnd.Length == 9 || cmnd.Length == 12)
-                {
-                    if (DV_ktDulieu(cmnd) == false)
-                    {
-                        errorCMND = "Nhập sai CMND/CCCD!\n";
-                        check = true;
-                    }
-                }
-                else
-                {
-                    errorCMND = "Nhập sai CMND/CCCD!\n";
-                    check = true;
-                }
-            }
-
-
-            if (check)
-            {
-                DialogResult result = MessageBox.Show(errorTen + errorSDT + errorCMND + errorDiaChi + errorLuongcb + errorChucVu, "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return true;
-            }
-            return false;
-        }
-
-        // Load data to listview
-        void NV_loadNV(string query = "select * from NHANVIEN NV INNER JOIN CHUCVU CV ON NV.IDCHUCVU = CV.ID")
-        {
-            listView_NhanVien.Items.Clear();
-            DataTable dt = DataProvider.Instance.ExecuteQuery(query);
-            int i;
-            for (i = 0; i <= dt.Rows.Count - 1; i++)
-            {
-                listView_NhanVien.Items.Add(dt.Rows[i].ItemArray[0].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[1].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[2].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[3].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[4].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[5].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[6].ToString());
-                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[9].ToString());
-            }
-
-        }
-        //Refresh
-        private void btn_NV_RefreshNV_Click(object sender, EventArgs e)
-        {
-            listView_NhanVien.Items.Clear();
-            tb_NV_idNV.Clear();
-            tb_NV_tenNV.Clear();
-            tb_NV_sdtNV.Clear();
-            tb_NV_cmndNV.Clear();
-            tb_NV_dcNV.Clear();
-            tb_NV_dcNV.Clear();
-            tb_NV_lcbNV.Clear();
-            radiobtn_NV_GTnam.Checked = false;
-            radiobtn_NV_GTnu.Checked = false;
-            cb_NV_chucvu.SelectedIndex = -1;
-            NV_loadNV();
-        }
-
-        // Binding listview
-        private void listView_NhanVien_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (listView_NhanVien.SelectedItems.Count == 0) return;
-            
-            btn_NV_suaNV.Enabled = true;
-            btn_NV_xoaNV.Enabled = true;
-
-            ListViewItem lvi = listView_NhanVien.SelectedItems[0];
-
-            tb_NV_idNV.Text = lvi.SubItems[0].Text;
-            tb_NV_tenNV.Text = lvi.SubItems[1].Text;
-            tb_NV_sdtNV.Text = lvi.SubItems[3].Text;
-            tb_NV_cmndNV.Text = lvi.SubItems[4].Text;
-            tb_NV_dcNV.Text = lvi.SubItems[5].Text;
-            tb_NV_lcbNV.Text = lvi.SubItems[6].Text;
-            string gender = lvi.SubItems[2].Text;
-            cb_NV_chucvu.Text = lvi.SubItems[7].Text;
-            if (gender == "Nữ")
-            {
-                radiobtn_NV_GTnu.Checked = true;
-            }
-            else
-            {
-                radiobtn_NV_GTnam.Checked = true;
-            }
-        }
-
-    
-
-        // Tìm kiếm nhân viên
-        private void tb_NV_TimKiemNV_TextChanged(object sender, EventArgs e)
-        {
-            string tenNV = tb_NV_TimKiemNV.Text.Trim();
-            string query = "select* from NHANVIEN NV INNER JOIN CHUCVU CV ON NV.IDCHUCVU = CV.ID where NV.HOTEN like N'" + tenNV + "%'";
-            NV_loadNV(query);
-        }
-
-        //Thêm nhân viên
-        private void btn_NV_themNV_Click(object sender, EventArgs e)
-        {
-            string tennv = tb_NV_tenNV.Text.Trim();
-            string gt;
-            if (radiobtn_NV_GTnam.Checked == true)
-                gt = "Nam";
-            else
-                gt = "Nữ";
-            string sdt = tb_NV_sdtNV.Text.Trim();
-            string cmnd = tb_NV_cmndNV.Text.Trim();
-            string diachi = tb_NV_dcNV.Text.Trim();
-            string chucvu = this.cb_NV_chucvu.GetItemText(this.cb_NV_chucvu.SelectedItem);
-
-            string query = "select ID from CHUCVU where TENCHUCVU = N'" + chucvu + "'";
-
-            if (ktDuLieuNV())
-            {
-                return;
-            }
-
-            decimal luongcb = 0;
-            luongcb = decimal.Parse(tb_NV_lcbNV.Text.Trim());
-
-            int idcv = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
-
-            query = "SELECT COUNT(*) FROM NHANVIEN WHERE NHANVIEN.CMND = N'" + cmnd + "'";
-            int k = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
-
-            if (k != 0)
-            {
-                DialogResult result = MessageBox.Show("Nhân viên đã tồn tại!", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            query = "INSERT[dbo].[NHANVIEN]([HOTEN], [GIOITINH], [SDT], [CMND], [DIACHI], [LUONGCOBAN], " +
-                "[IDCHUCVU]) VALUES(N'" + tennv + "', N'" + gt + "', N'" + sdt + "', N'" + cmnd + "', N'" + diachi + "', " + luongcb + "," + idcv + ")";
-
-            if (DV_Xacnhan("Bạn có đồng ý thêm nhân viên?") == true)
-            {
-                int kq = DataProvider.Instance.ExecuteNonQuery(query);
-            }
-            else
-            {
-                return;
-            }
-
-
-            MessageBox.Show("Thêm nhân viên thành công!");
-            listView_NhanVien.Items.Clear();
-            NV_loadNV();
-
-            query = "SELECT ID FROM NHANVIEN WHERE NHANVIEN.CMND = N'" + cmnd + "'";
-            string id = DataProvider.Instance.ExecuteScalar(query).ToString();
-            query = "INSERT[dbo].[NGUOIDUNG]([TAIKHOAN], [MATKHAU], [IDNHANVIEN]) VALUES(N'NV" + id + "', N'1', " + id + ")";
-            DataProvider.Instance.ExecuteNonQuery(query);
-            MessageBox.Show("Thêm tài khoản mật khẩu thành công");
-
-        }
-
-        private void btn_NV_suaNV_Click(object sender, EventArgs e)
-        {
-            if (ktDuLieuNV())
-            {
-                return;
-            }
-            string chucvu = this.cb_NV_chucvu.GetItemText(this.cb_NV_chucvu.SelectedItem);
-            string query = "select ID from CHUCVU where TENCHUCVU = N'" + chucvu + "'";
-
-            string idnv = tb_NV_idNV.Text.Trim();
-
-            string tennv = tb_NV_tenNV.Text.Trim();
-            string gt;
-            if (radiobtn_NV_GTnam.Checked == true)
-                gt = "Nam";
-            else
-                gt = "Nữ";
-
-            string sdt = tb_NV_sdtNV.Text.Trim();
-            string cmnd = tb_NV_cmndNV.Text.Trim();
-            string diachi = tb_NV_dcNV.Text.Trim();
-            decimal luongcb = decimal.Parse(tb_NV_lcbNV.Text.Trim());
-
-            if ((radiobtn_NV_GTnam.Checked == false && radiobtn_NV_GTnu.Checked == false) || tennv == "" || diachi == "")
-            {
-                DialogResult result = MessageBox.Show("Nhập thiếu thông tin!!!", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int idcv = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
-            query = "update NHANVIEN set HOTEN = N'" + tennv + "',GIOITINH = N'" + gt + "',SDT = N'" + sdt
-                + "', CMND = N'" + cmnd + "',DIACHI = N'" + diachi + "',LUONGCOBAN = " + luongcb + ",IDCHUCVU = " + idcv + "WHERE ID =" + idnv;
-
-            if (DV_Xacnhan("Bạn có đồng ý sửa nhân viên?") == true)
-            {
-                int kq = DataProvider.Instance.ExecuteNonQuery(query);
-            }
-            else
-            {
-                return;
-            }
-
-            MessageBox.Show("Sửa thông tin nhân viên thành công");
-            NV_loadNV();
-        }
-
-        //Xóa nhân viên
-        private void btn_NV_xoaNV_Click(object sender, EventArgs e)
-        {
-            if (IDNhanVien_SignedIn == tb_NV_idNV.Text)
-            {
-                MessageBox.Show("Không được xóa chính mình?", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            string idnv = tb_NV_idNV.Text.Trim();
-
-            string query = "SELECT COUNT (*) FROM NHANVIEN AS NV, HOADON AS HD WHERE NV.ID = HD.IDNhanVien AND NV.ID = " + idnv;
-            int kq = int.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
-            if(kq > 0)
-            {
-                MessageBox.Show("Dữ liệu nhân viên đang được dùng","", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }    
-            string query1 = "DELETE FROM NGUOIDUNG WHERE NGUOIDUNG.IDNHANVIEN =" + idnv;
-            string query2 = "DELETE FROM NHANVIEN WHERE ID = " + idnv;
-            if (DV_Xacnhan("Bạn có đồng ý xóa nhân viên?") == true)
-            {
-                int kq1 = DataProvider.Instance.ExecuteNonQuery(query1);
-                int kq2 = DataProvider.Instance.ExecuteNonQuery(query2);
-            }
-            else
-            {
-                return;
-            }
-
-
-            MessageBox.Show("Xóa nhân viên thành công!");
-            NV_loadNV();
-        }
 
         #endregion
 
@@ -1703,17 +1346,17 @@ namespace QUANLYKHACHSAN
         //Thêm dịch vụ
         private void btn_DV_ThemDichVu_Click(object sender, EventArgs e)
         {
-            //int id = db.DICHVUs.Select(dc => dc.ID).Max() + 1;
-            string query = "";
-            string tendv = tb_DV_Tendichvu.Text.Trim();
+
+            DICHVU dv = new DICHVU();
+            dv.TenDichVu = tb_DV_Tendichvu.Text.Trim();
 
             string timedb = maskedTB_DV_Tgbd.Text.Trim();
             string timekt = maskedTB_DV_Tgkt.Text.Trim();
             string timetotal = timedb + "-" + timekt;
+            dv.ThoiGianPhucVu = timetotal;
 
-            if (tendv == "" || tb_DV_Gia.Text.Trim() == "" || timedb == ":" || timekt == ":")
+            if (dv.TenDichVu == "" || tb_DV_Gia.Text.Trim() == "" || timedb == ":" || timekt == ":")
             {
-
                 MessageBox.Show("Nhập thiếu thông tin!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -1723,27 +1366,23 @@ namespace QUANLYKHACHSAN
                 {
                     if (DV_ktDulieu(tb_DV_Gia.Text.Trim()) == false)
                     {
-
                         MessageBox.Show("Nhập sai kiểu dữ liệu!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
                 }
             }
-            query = "SELECT COUNT(*) FROM DICHVU WHERE DICHVU.TENDICHVU = N'" + tendv + "'";
-            int k = int.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
-            if (k != 0)
-            {
-                MessageBox.Show("Dịch vụ đã tồn tại");
-                return;
-            }
 
-            decimal gia = decimal.Parse(tb_DV_Gia.Text);
-
-            query = "INSERT[dbo].[DICHVU]([TENDICHVU], [GIA], [THOIGIANPHUCVU]) VALUES(N'" + tendv + "'," + gia + ", N'" + timetotal + "')";
+            dv.Gia = decimal.Parse(tb_DV_Gia.Text);
 
             if (DV_Xacnhan("Bạn có đồng ý thêm dịch vụ?") == true)
             {
-                DataProvider.Instance.ExecuteQuery(query);
+                int k = dv.ThemDichVu();
+                MessageBox.Show(k.ToString());
+                if (k == 0)
+                {
+                    MessageBox.Show("Dịch vụ đã tồn tại");
+                    return;
+                }
             }
             else
             {
@@ -1756,16 +1395,15 @@ namespace QUANLYKHACHSAN
         //Sửa dịch vụ
         private void btn_DV_SuaDV_Click(object sender, EventArgs e)
         {
+            DICHVU dv = new DICHVU();
 
-            string query = "select ID from DICHVU where (TENDICHVU=N'" + tendvcheck.Trim() + "')";
-            string id = DataProvider.Instance.ExecuteScalar(query).ToString();
-
-
-            string tendv = tb_DV_Tendichvu.Text.Trim();
-            decimal gia = 0; ;
+            dv.TenDichVu = tb_DV_Tendichvu.Text.Trim();
+            dv.Gia = 0; ;
             string tgbatdau = maskedTB_DV_Tgbd.Text;
             string tgketthuc = maskedTB_DV_Tgkt.Text;
             string tgphucvu = tgbatdau + "-" + tgketthuc;
+            dv.ThoiGianPhucVu = tgphucvu;
+
             if (tb_DV_Gia.Text.Trim() != "")
             {
                 if (DV_ktDulieu(tb_DV_Gia.Text.Trim()) == false)
@@ -1776,16 +1414,14 @@ namespace QUANLYKHACHSAN
                 }
                 else
                 {
-                    gia = decimal.Parse(tb_DV_Gia.Text.Trim());
+                    dv.Gia = decimal.Parse(tb_DV_Gia.Text.Trim());
                 }
             }
 
-            query = "update DICHVU set TENDICHVU = N'" + tendv + "'" +
-            ",GIA='" + gia + "',THOIGIANPHUCVU='" + tgphucvu + "'WHERE ID = '" + id + "'";
 
             if (DV_Xacnhan("Bạn có đồng ý sửa dịch vụ?") == true)
             {
-                DataProvider.Instance.ExecuteNonQuery(query);
+                dv.SuaDichVu(tendvcheck);
             }
             else
             {
@@ -1797,13 +1433,12 @@ namespace QUANLYKHACHSAN
         //Xóa dịch vụ
         private void btn_DV_XoaDV_Click(object sender, EventArgs e)
         {
-            string query = "select ID from DICHVU where (TENDICHVU=N'" + tb_DV_Tendichvu.Text.Trim() + "')";
-            string id = DataProvider.Instance.ExecuteScalar(query).ToString();
 
-            query = "DELETE FROM DICHVU WHERE ID = " + id;
+            string tendv = tb_DV_Tendichvu.Text.Trim();
+            DICHVU dv = new DICHVU();
             if (DV_Xacnhan("Bạn có đồng ý xóa dịch vụ?") == true)
             {
-                DataProvider.Instance.ExecuteNonQuery(query);
+                dv.XoaDichVu(tendv);
             }
             else
             {
@@ -1813,7 +1448,7 @@ namespace QUANLYKHACHSAN
             DV_loadDichVu();
         }
 
-        #endregion
+        #endregion 
 
         #region QuanLyThueDichVu
 
@@ -1826,24 +1461,22 @@ namespace QUANLYKHACHSAN
 
         private void btn_TDV_LapPhieu_Click(object sender, EventArgs e)
         {
-            
+            THUEDICHVU thuedv = new THUEDICHVU();
             if (txt_TDV_IDDichVuLP.Text == "" || txt_TDV_IDThuePhongLP.Text == "")
             {
                 MessageBox.Show("Thiếu thông tin");
                 return;
             }
 
-            string IDDichVu = txt_TDV_IDDichVuLP.Text;
-            string IDBangThuePhong = txt_TDV_IDThuePhongLP.Text;
-            decimal soluong = nbr_TDV_SoLuongLP.Value;
+            thuedv.IDDichVu = Int32.Parse(txt_TDV_IDDichVuLP.Text);
+            thuedv.IDThuePhong = Int32.Parse(txt_TDV_IDThuePhongLP.Text);
+            thuedv.SoLuong = nbr_TDV_SoLuongLP.Value;
 
-            string query = "insert into BANGTHUEDICHVU values('" + IDDichVu + "','" + IDBangThuePhong + "','" + soluong + "')";
 
             int kq;
-
             if (DV_Xacnhan("Bạn có đồng ý lập phiếu thuê?") == true)
             {
-                kq = DataProvider.Instance.ExecuteNonQuery(query);
+                kq = thuedv.LapPhieu();
             }
             else
             {
@@ -1991,24 +1624,21 @@ namespace QUANLYKHACHSAN
         }
         private void btn_Sua_DST_Click(object sender, EventArgs e)
         {
-            
+
             if (txt_IDThueDV_DST.Text == "")
             {
                 MessageBox.Show("Thiếu thông tin");
                 return;
             }
             //xu li luu data
-            decimal IDThueDV = Convert.ToDecimal(txt_IDThueDV_DST.Text);
-            decimal soluong = nbr_SoLuong_DST.Value;
-
-            string cmd = "update BANGTHUEDICHVU set SOLUONG = " + soluong
-                                   + " where ID = " + IDThueDV;
+            THUEDICHVU thuedv = new THUEDICHVU();
+            thuedv.ID = int.Parse(txt_IDThueDV_DST.Text);
+            thuedv.SoLuong = nbr_SoLuong_DST.Value;
 
             int kq;
-
             if (DV_Xacnhan("Bạn có đồng ý sửa phiếu thuê?") == true)
             {
-                kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+                kq = thuedv.SuaPhieuTDV();
             }
             else
             {
@@ -2025,25 +1655,25 @@ namespace QUANLYKHACHSAN
                 MessageBox.Show("Sửa thông tin thất bại");
             }
         }
+
         private void btn_Xoa_DST_Click(object sender, EventArgs e)
         {
-            
+
             if (txt_IDThueDV_DST.Text == "")
             {
                 MessageBox.Show("Thiếu thông tin");
                 return;
             }
             //xu li luu data
-            decimal IDThueDV = Convert.ToDecimal(txt_IDThueDV_DST.Text);
-            decimal soluong = nbr_SoLuong_DST.Value;
-
-            string cmd = "delete from BANGTHUEDICHVU" + " where ID = " + IDThueDV;
+            THUEDICHVU thuedv = new THUEDICHVU();
+            thuedv.ID = int.Parse(txt_IDThueDV_DST.Text);
+            thuedv.SoLuong = nbr_SoLuong_DST.Value;
 
             int kq;
 
             if (DV_Xacnhan("Bạn có đồng ý xóa phiếu thuê?") == true)
             {
-                kq = DataProvider.Instance.ExecuteNonQuery(cmd);
+                kq = thuedv.XoaPhieuTDV();
             }
             else
             {
@@ -2316,6 +1946,7 @@ namespace QUANLYKHACHSAN
                 return;
             label_HD_IDNhanVien_Value.Text = IDNhanVien_SignedIn;
 
+            HOADON hd = new HOADON();
             string IDKhachHang = textBox_HD_IDKH.Text;
             string IDThuePhong = textBox_HD_IDThuePhong.Text.Trim();
             string IDNhanVien = label_HD_IDNhanVien_Value.Text;
@@ -2324,6 +1955,13 @@ namespace QUANLYKHACHSAN
             label_HD_NgayLapHD_Value.Text = NgayLapHD.ToString();
 
             int IDHD = HD_Check_HD(IDThuePhong);
+
+            hd.ID = IDHD;
+            hd.IDKhachHang = int.Parse(IDKhachHang);
+            hd.IDThuePhong = int.Parse(IDThuePhong);
+            hd.IDNhanVien = int.Parse(IDNhanVien);
+            hd.TongTien = int.Parse(Tong);
+            hd.NgayLapHD = NgayLapHD;
 
             if (IDKhachHang == "" || IDThuePhong == "" || IDNhanVien == "" || Tong == "")
             {
@@ -2335,10 +1973,7 @@ namespace QUANLYKHACHSAN
                 MessageBox.Show("Hóa đơn đã tồn tại!");
                 return;
             }
-
-
-            string cmd_TaoHD = "INSERT INTO DBO.HOADON values ('" + int.Parse(IDKhachHang) + "','" + int.Parse(IDThuePhong) + "','" + int.Parse(IDNhanVien) + "','" + double.Parse(Tong) + "','" + NgayLapHD + "')";
-            int KQ = DataProvider.Instance.ExecuteNonQuery(cmd_TaoHD);
+            int KQ = hd.TaoHoaDon();
 
             if (KQ <= 0)
             {
@@ -2725,6 +2360,14 @@ namespace QUANLYKHACHSAN
             DateTime NgayLapBC = DateTime.Now;
             string DoanhThu = BC_TinhDoanhThu(ThangBC, NamBC);
 
+            BAOCAO bc = new BAOCAO();
+            bc.TenBaoCao = TenBC;
+            bc.ThangBaoCao = int.Parse(ThangBC);
+            bc.NamBaoCao = int.Parse(NamBC);
+            bc.IDNhanVien = int.Parse(IDNV);
+            bc.NgayLapBC = NgayLapBC;
+            bc.DoanhThu = DoanhThu;
+
             // Kiểm tra dữ liệu
             if (textBox_BC_TenBC.Text.Trim() == "" || textBox_BC_NamBC.Text.Trim() == "" || comboBox_BC_ThangBC.Text.Trim() == "")
             {
@@ -2742,9 +2385,8 @@ namespace QUANLYKHACHSAN
             {
                 return;
             }
-            string cmd_TaoBC = "INSERT INTO DBO.BAOCAO values ('" + TenBC + "','" + ThangBC + "','" + NamBC + "','" + IDNV + "','" + NgayLapBC + "','" + DoanhThu + "')";
 
-            int KQ = DataProvider.Instance.ExecuteNonQuery(cmd_TaoBC);
+            int KQ = bc.ThemBaoCao();
 
             if (KQ <= 0)
             {
@@ -2777,6 +2419,7 @@ namespace QUANLYKHACHSAN
         #endregion
 
         #region DangXuat_Doimatkhau
+
 
         NHANVIEN nhanvien;
         public Form1(NHANVIEN nHANVIEN)
@@ -2938,6 +2581,348 @@ namespace QUANLYKHACHSAN
             return false;
         }
 
+
+        #endregion
+    
+        #region QuanLyNhanVien
+        //Tab control
+        bool DV_ktDulieu(string str)
+        {
+            for (int i = 0; i < str.Length; i++)
+            {
+                if ((str[i] >= 48 && str[i] <= 57) == false)
+                {
+                    if (str[i] != '.')
+                    {
+                        return false;
+                    }
+                }
+
+            }
+            return true;
+        }
+        
+        // kiểm tra dữ liệu nhập vào
+        bool ktDuLieuNV()
+        {
+            string ten = tb_NV_tenNV.Text.Trim();
+            string sdt = tb_NV_sdtNV.Text.Trim();
+            string cmnd = tb_NV_cmndNV.Text.Trim();
+            string diachi = tb_NV_dcNV.Text.Trim();
+            string luongcb = tb_NV_lcbNV.Text.Trim();
+            string chucvu = cb_NV_chucvu.Text.Trim();
+
+            string errorTen = "";
+            string errorSDT = "";
+            string errorCMND = "";
+            string errorDiaChi = "";
+            string errorLuongcb = "";
+            string errorChucVu = "";
+
+            bool check = false;
+            if (ten.Trim() == "")
+            {
+                errorTen = "Nhập thiếu tên!\n";
+                check = true;
+            }
+
+            if (chucvu.Trim() == "")
+            {
+                errorChucVu = "Nhập thiếu chức vụ!\n";
+                check = true;
+            }
+
+            if (diachi.Trim() == "")
+            {
+                errorDiaChi = "Nhập thiếu địa chỉ!\n";
+                check = true;
+            }
+
+            if (tb_NV_lcbNV.Text.Trim() != "")
+            {
+                //luongcb = tb_NV_lcbNV.Text.Trim().Split('.');
+                if (DV_ktDulieu(luongcb) == false)
+                {
+                    errorLuongcb = "Nhập sai lương!\n";
+                    check = true;
+                }
+            }
+            else
+            {
+                errorLuongcb = "Nhập thiếu lương!\n";
+                check = true;
+            }
+
+            if (sdt.Length == 0)
+            {
+                errorSDT = "Nhập thiếu số điện thoại!\n";
+                check = true;
+            }
+            else
+            {
+                if (sdt.Length != 10)
+                {
+                    errorSDT = "Nhập sai số điện thoại!\n";
+                    check = true;
+                }
+                else
+                {
+                    if (DV_ktDulieu(sdt) == false)
+                    {
+                        errorSDT = "Nhập sai số điện thoại!\n";
+                        check = true;
+                    }
+
+                }
+            }
+
+            if (cmnd.Length == 0)
+            {
+                errorCMND = "Nhập thiếu CMND/CCCD!\n";
+                check = true;
+            }
+            else
+            {
+                if (cmnd.Length == 9 || cmnd.Length == 12)
+                {
+                    if (DV_ktDulieu(cmnd) == false)
+                    {
+                        errorCMND = "Nhập sai CMND/CCCD!\n";
+                        check = true;
+                    }
+                }
+                else
+                {
+                    errorCMND = "Nhập sai CMND/CCCD!\n";
+                    check = true;
+                }
+            }
+
+
+            if (check)
+            {
+                DialogResult result = MessageBox.Show(errorTen + errorSDT + errorCMND + errorDiaChi + errorLuongcb + errorChucVu, "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return true;
+            }
+            return false;
+        }
+
+        // Load data to listview
+        void NV_loadNV(string query = "select * from NHANVIEN NV INNER JOIN CHUCVU CV ON NV.IDCHUCVU = CV.ID")
+        {
+            listView_NhanVien.Items.Clear();
+            DataTable dt = DataProvider.Instance.ExecuteQuery(query);
+            int i;
+            for (i = 0; i <= dt.Rows.Count - 1; i++)
+            {
+                listView_NhanVien.Items.Add(dt.Rows[i].ItemArray[0].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[1].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[2].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[3].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[4].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[5].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[6].ToString());
+                listView_NhanVien.Items[i].SubItems.Add(dt.Rows[i].ItemArray[9].ToString());
+            }
+
+        }
+        //Refresh
+        private void btn_NV_RefreshNV_Click(object sender, EventArgs e)
+        {
+            listView_NhanVien.Items.Clear();
+            tb_NV_idNV.Clear();
+            tb_NV_tenNV.Clear();
+            tb_NV_sdtNV.Clear();
+            tb_NV_cmndNV.Clear();
+            tb_NV_dcNV.Clear();
+            tb_NV_dcNV.Clear();
+            tb_NV_lcbNV.Clear();
+            radiobtn_NV_GTnam.Checked = false;
+            radiobtn_NV_GTnu.Checked = false;
+            cb_NV_chucvu.SelectedIndex = -1;
+            NV_loadNV();
+        }
+
+        // Binding listview
+        private void listView_NhanVien_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listView_NhanVien.SelectedItems.Count == 0) return;
+            
+            btn_NV_suaNV.Enabled = true;
+            btn_NV_xoaNV.Enabled = true;
+
+            ListViewItem lvi = listView_NhanVien.SelectedItems[0];
+
+            tb_NV_idNV.Text = lvi.SubItems[0].Text;
+            tb_NV_tenNV.Text = lvi.SubItems[1].Text;
+            tb_NV_sdtNV.Text = lvi.SubItems[3].Text;
+            tb_NV_cmndNV.Text = lvi.SubItems[4].Text;
+            tb_NV_dcNV.Text = lvi.SubItems[5].Text;
+            tb_NV_lcbNV.Text = lvi.SubItems[6].Text;
+            string gender = lvi.SubItems[2].Text;
+            cb_NV_chucvu.Text = lvi.SubItems[7].Text;
+            if (gender == "Nữ")
+            {
+                radiobtn_NV_GTnu.Checked = true;
+            }
+            else
+            {
+                radiobtn_NV_GTnam.Checked = true;
+            }
+        }
+
+    
+
+        // Tìm kiếm nhân viên
+        private void tb_NV_TimKiemNV_TextChanged(object sender, EventArgs e)
+        {
+            string tenNV = tb_NV_TimKiemNV.Text.Trim();
+            string query = "select* from NHANVIEN NV INNER JOIN CHUCVU CV ON NV.IDCHUCVU = CV.ID where NV.HOTEN like N'" + tenNV + "%'";
+            NV_loadNV(query);
+        }
+
+        //Thêm nhân viên
+        private void btn_NV_themNV_Click(object sender, EventArgs e)
+        {
+            string tennv = tb_NV_tenNV.Text.Trim();
+            string gt;
+            if (radiobtn_NV_GTnam.Checked == true)
+                gt = "Nam";
+            else
+                gt = "Nữ";
+            string sdt = tb_NV_sdtNV.Text.Trim();
+            string cmnd = tb_NV_cmndNV.Text.Trim();
+            string diachi = tb_NV_dcNV.Text.Trim();
+            string chucvu = this.cb_NV_chucvu.GetItemText(this.cb_NV_chucvu.SelectedItem);
+            NHANVIEN NV = new NHANVIEN();
+            NV.HOTEN = tennv;
+            NV.GIOITINH = gt;
+            NV.SDT = sdt;
+            NV.CMND = cmnd;
+            NV.DIACHI = diachi;
+            string query = "select ID from CHUCVU where TENCHUCVU = N'" + chucvu + "'";
+
+            if (ktDuLieuNV())
+            {
+                return;
+            }
+
+            decimal luongcb = 0;
+            luongcb = decimal.Parse(tb_NV_lcbNV.Text.Trim());
+            NV.LUONGCB = luongcb;
+            int idcv = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
+            NV.IDCHUCVU = idcv;
+            query = "SELECT COUNT(*) FROM NHANVIEN WHERE NHANVIEN.CMND = N'" + cmnd + "'";
+            int k = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
+
+            if (k != 0)
+            {
+                DialogResult result = MessageBox.Show("Nhân viên đã tồn tại!", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (DV_Xacnhan("Bạn có đồng ý thêm nhân viên?") == true)
+            {
+                int kq = NV.ThemNhanVien();
+            }
+            else
+            {
+                return;
+            }
+
+
+            MessageBox.Show("Thêm nhân viên thành công!");
+            listView_NhanVien.Items.Clear();
+            NV_loadNV();
+
+            query = "SELECT ID FROM NHANVIEN WHERE NHANVIEN.CMND = N'" + cmnd + "'";
+            string id = DataProvider.Instance.ExecuteScalar(query).ToString();
+            query = "INSERT[dbo].[NGUOIDUNG]([TAIKHOAN], [MATKHAU], [IDNHANVIEN]) VALUES(N'NV" + id + "', N'1', " + id + ")";
+            DataProvider.Instance.ExecuteNonQuery(query);
+            MessageBox.Show("Thêm tài khoản mật khẩu thành công");
+
+        }
+
+        private void btn_NV_suaNV_Click(object sender, EventArgs e)
+        {
+            if (ktDuLieuNV())
+            {
+                return;
+            }
+            string chucvu = this.cb_NV_chucvu.GetItemText(this.cb_NV_chucvu.SelectedItem);
+            string query = "select ID from CHUCVU where TENCHUCVU = N'" + chucvu + "'";
+
+            int idnv = int.Parse(tb_NV_idNV.Text.Trim());
+
+            string tennv = tb_NV_tenNV.Text.Trim();
+            string gt;
+
+            if (radiobtn_NV_GTnam.Checked == true)
+                gt = "Nam";
+            else
+                gt = "Nữ";
+            string sdt = tb_NV_sdtNV.Text.Trim();
+            string cmnd = tb_NV_cmndNV.Text.Trim();
+            string diachi = tb_NV_dcNV.Text.Trim();
+            decimal luongcb = decimal.Parse(tb_NV_lcbNV.Text.Trim());
+
+            if ((radiobtn_NV_GTnam.Checked == false && radiobtn_NV_GTnu.Checked == false) || tennv == "" || diachi == "")
+            {
+                DialogResult result = MessageBox.Show("Nhập thiếu thông tin!!!", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            int idcv = Int32.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
+            NHANVIEN NV = new NHANVIEN();
+            NV.ID = idnv;
+            NV.HOTEN = tennv;
+            NV.GIOITINH = gt;
+            NV.SDT = sdt;
+            NV.CMND = cmnd;
+            NV.DIACHI = diachi;
+            NV.IDCHUCVU = idcv;
+            NV.LUONGCB = luongcb;
+            if (DV_Xacnhan("Bạn có đồng ý sửa nhân viên?") == true)
+            {
+                NV.SuaNhanVien();
+            }
+            else
+            {
+                return;
+            }
+            MessageBox.Show("Sửa thông tin nhân viên thành công");
+            NV_loadNV();
+        }
+
+        //Xóa nhân viên
+        private void btn_NV_xoaNV_Click(object sender, EventArgs e)
+        {
+            if (IDNhanVien_SignedIn == tb_NV_idNV.Text)
+            {
+                MessageBox.Show("Không được xóa chính mình?", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            int idnv = int.Parse(tb_NV_idNV.Text.Trim());
+            NHANVIEN NV = new NHANVIEN();
+            NV.ID = idnv;
+            string query = "SELECT COUNT (*) FROM NHANVIEN AS NV, HOADON AS HD WHERE NV.ID = HD.IDNhanVien AND NV.ID = " + idnv;
+            int kq = int.Parse(DataProvider.Instance.ExecuteScalar(query).ToString());
+            if (kq > 0)
+            {
+                MessageBox.Show("Dữ liệu nhân viên đang được dùng", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (DV_Xacnhan("Bạn có đồng ý xóa nhân viên?") == true)
+            {
+                NV.XoaNhanVien();
+            }
+            else
+            {
+                return;
+            }
+
+
+            MessageBox.Show("Xóa nhân viên thành công!");
+            NV_loadNV();
+        }
 
         #endregion
 
